@@ -8,16 +8,22 @@ jobs:
     steps:
       - name: Install prerequisites
         run: |
+          sudo apt update
           sudo apt install -y flex bison libicu-dev libperl-dev tcl krb5-multidev
       - name: Checkout code
         uses: actions/checkout@v4
       - name: build
         run: |
+          echo "::group::Configure"
           chmod +x ./configure
           ./configure --without-readline
+          echo "::endgroup::"
+          echo "::group::Make"
           make world-bin
-          su
-          make install
+          echo "::endgroup::"
+          echo "::group::Install"
+          sudo make install
+          echo "::endgroup::"
       - name: "Upload files"
         uses: actions/upload-artifact@v4
         with:
