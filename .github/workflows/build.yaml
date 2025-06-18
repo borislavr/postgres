@@ -38,12 +38,12 @@ jobs:
           cp ./postgresql/debian ../ -rf
           cd ..
           dpkg-buildpackage -rfakeroot -b -uc -us
-      - name: "Upload files"
+      - name: Upload deb packages
         uses: actions/upload-artifact@v4
         with:
           include-hidden-files: true
-          path: /usr/local/pgsql
-          name: pgsql
+          path: ./*.deb
+          name: pgsql-deb
 #  build-deb:
 #    needs: build
 #    runs-on: ubuntu-latest
