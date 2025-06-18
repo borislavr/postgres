@@ -17,6 +17,8 @@ jobs:
           python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: REL_17_STABLE
 #      - name: build
 #        run: |
 #          echo "::group::Configure"
