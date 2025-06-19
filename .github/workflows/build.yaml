@@ -53,5 +53,5 @@ jobs:
         with:
           include-hidden-files: true
           path: /home/runner/work/postgres/**/*.deb
-          name: pgsql-deb
+          name: pgsql-${{ inputs.pg_version }}-deb
 
