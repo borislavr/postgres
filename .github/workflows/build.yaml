@@ -1,5 +1,5 @@
 name: build
-
+run-name: PostgreSQL ${{ inputs.pg_version }}
 on:
   workflow_dispatch:
     inputs:
