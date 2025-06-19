@@ -40,13 +40,15 @@ jobs:
           cp ${GITHUB_WORKSPACE}/deb/postgresql/debian ${GITHUB_WORKSPACE} -rf
           dpkg-buildpackage -rfakeroot -b -uc -us
           echo "::endgroup::"
+          echo "distribution_root=$(realpath ${GITHUB_WORKSPACE}/../)" >> $GITHUB_ENV
       - name: Upload deb packages
         uses: actions/upload-artifact@v4
         with:
           include-hidden-files: true
-          path: ${{ github.workspace }}/**/*.deb
+          path: ${{ env.distribution_root }}/**/*.deb
           name: pgsql-${{ inputs.pg_version }}-deb
       - name: Summary
         run: |
           echo "## Built packages:" >> $GITHUB_STEP_SUMMARY
-          find . -name *.deb | grep ".deb" >> $GITHUB_STEP_SUMMARY
+          cd ${{ env.distribution_root }}
+          find  -name *.deb | grep ".deb" >> $GITHUB_STEP_SUMMARY
