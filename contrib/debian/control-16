@@ -1,0 +1,37 @@
+Source: postgresql-16
+Section: database
+Priority: optional
+Maintainer: Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>
+Uploaders: Christoph Berg <myon@debian.org>, Martin Pitt <mpitt@debian.org>
+Build-Depends: debhelper-compat (= 13),
+               dh-exec,
+               libicu-dev (>= 63.1),
+               libkrb5-dev,
+               libldap2-dev,
+               liblz4-dev,
+               libpam0g-dev,
+               libperl-dev,
+               libreadline-dev,
+               libssl-dev,
+               libxml2-dev,
+               libxslt1-dev,
+               postgresql-common (>= 247~),
+               python3-dev,
+               tcl-dev,
+               zlib1g-dev
+Standards-Version: 4.6.2
+Homepage: http://www.postgresql.org/
+Vcs-Browser: https://salsa.debian.org/postgresql/postgresql
+Vcs-Git: https://salsa.debian.org/postgresql/postgresql.git
+
+Package: postgresql-16-contrib
+Architecture: any
+Depends: postgresql-16 (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: Additional facilities for PostgreSQL 16
+ The postgresql-contrib package contains contributed packages that are
+ included in the PostgreSQL distribution but are not officially supported
+ by the PostgreSQL core team.
+ .
+ This package contains the contrib modules for PostgreSQL 16.
