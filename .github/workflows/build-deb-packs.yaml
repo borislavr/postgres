@@ -51,4 +51,4 @@ jobs:
         run: |
           echo "## Built packages:" >> $GITHUB_STEP_SUMMARY
           cd ${{ env.distribution_root }}
-          find  -name *.deb | grep ".deb" >> $GITHUB_STEP_SUMMARY
+          find  -name "*.deb" | grep ".deb" >> $GITHUB_STEP_SUMMARY
