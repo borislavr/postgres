@@ -1,0 +1,81 @@
+name: Build Deb packages
+run-name: "PostgreSQL: ${{ inputs.pg_version }}. Tag: ${{ inputs.tag }}. Branch: ${{ github.ref_name }}"
+on:
+  workflow_dispatch:
+    inputs:
+      pg_version:
+        description: Target PostgreSQL version
+        type: choice
+        required: true
+        options:
+          - '17'
+          - '16'
+          - '15'
+      tag:
+        description: Tag name to be created for deb packages upload to
+        type: string
+        required: true
+      forceCreate:
+        description: Recreate tag if it exists
+        type: boolean
+        default: false
+        required: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing flex bison libicu-dev libperl-dev tcl krb5-multidev \
+          debhelper-compat dh-exec docbook-xsl gdb gettext dpkg-dev \
+          libio-pty-perl libipc-run-perl libkrb5-dev libldap2-dev libpam-dev \
+          libreadline-dev libselinux1-dev libssl-dev libsystemd-dev build-essential \
+          libxml2-dev libxml2-utils libxslt1-dev pkg-config clang llvm-dev \
+          python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Create a New Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@main
+        with:
+          ref: ${{ github.ref_name }}
+          tag-name: ${{ inputs.tag }}
+          force-create: ${{ inputs.forceCreate }}
+          switch-to-tag: true
+          create-release: true
+          skip-checkout: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build Debian PostgreSQL’s packages"
+        run: |
+          echo "::group::Get Debian scripts"
+          mkdir -p ${GITHUB_WORKSPACE}/deb && cd ${GITHUB_WORKSPACE}/deb
+          git clone https://salsa.debian.org/postgresql/postgresql.git
+          cd postgresql
+          git checkout ${{ inputs.pg_version }}
+          echo "::endgroup::"
+          echo "::group::Build deb packages"
+          cd ${GITHUB_WORKSPACE}
+          cp ${GITHUB_WORKSPACE}/deb/postgresql/debian ${GITHUB_WORKSPACE} -rf
+          dpkg-buildpackage -rfakeroot -b -uc -us
+          echo "::endgroup::"
+          echo "distribution_root=$(realpath ${GITHUB_WORKSPACE}/../)" >> $GITHUB_ENV
+      - name: "Upload assets"
+        uses: netcracker/qubership-workflow-hub/actions/assets-action@main
+        with:
+          tag: ${{ inputs.tag }}
+          item-path: ${{ env.distribution_root }}/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload deb packages
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     include-hidden-files: true
+      #     path: ${{ env.distribution_root }}/**/*.deb
+      #     name: pgsql-${{ inputs.pg_version }}-deb
+      - name: Summary
+        run: |
+          echo "## Built packages:" >> $GITHUB_STEP_SUMMARY
+          cd ${{ env.distribution_root }}
+          find  -name "*.deb" -printf "%f\n" | grep ".deb" >> $GITHUB_STEP_SUMMARY
+
