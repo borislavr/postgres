@@ -1,15 +1,25 @@
 name: Build Deb packages
-run-name: PostgreSQL ${{ inputs.pg_version }}
+run-name: "PostgreSQL: ${{ inputs.pg_version }}. Tag: ${{ inputs.tag }}. Branch: ${{ github.ref_name }}"
 on:
   workflow_dispatch:
     inputs:
       pg_version:
+        description: Target PostgreSQL version
         type: choice
         required: true
         options:
           - '17'
           - '16'
           - '15'
+      tag:
+        description: Tag name to be created for deb packages upload to
+        type: string
+        required: true
+      forceCreate:
+        description: Recreate tag if it exists
+        type: boolean
+        default: false
+        required: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,8 +35,17 @@ jobs:
           python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Create a New Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@main
         with:
-          ref: REL_${{ inputs.pg_version }}_STABLE
+          ref: ${{ github.ref_name }}
+          tag-name: ${{ inputs.tag }}
+          force-create: ${{ inputs.forceCreate }}
+          switch-to-tag: true
+          create-release: true
+          skip-checkout: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build Debian PostgreSQL’s packages"
         run: |
           echo "::group::Get Debian scripts"
@@ -41,12 +60,19 @@ jobs:
           dpkg-buildpackage -rfakeroot -b -uc -us
           echo "::endgroup::"
           echo "distribution_root=$(realpath ${GITHUB_WORKSPACE}/../)" >> $GITHUB_ENV
-      - name: Upload deb packages
-        uses: actions/upload-artifact@v4
+      - name: "Upload assets"
+        uses: netcracker/qubership-workflow-hub/actions/assets-action@main
         with:
-          include-hidden-files: true
-          path: ${{ env.distribution_root }}/**/*.deb
-          name: pgsql-${{ inputs.pg_version }}-deb
+          tag: ${{ inputs.tag }}
+          item-path: ${{ env.distribution_root }}/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload deb packages
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     include-hidden-files: true
+      #     path: ${{ env.distribution_root }}/**/*.deb
+      #     name: pgsql-${{ inputs.pg_version }}-deb
       - name: Summary
         run: |
           echo "## Built packages:" >> $GITHUB_STEP_SUMMARY
