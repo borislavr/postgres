@@ -20,8 +20,6 @@ on:
         type: boolean
         default: false
         required: false
-permissions:
-  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -56,6 +54,14 @@ jobs:
           cd postgresql
           git checkout ${{ inputs.pg_version }}
           echo "::endgroup::"
+          cd ${GITHUB_WORKSPACE}
+          mkdir -p ${GITHUB_WORKSPACE}/pg-patches
+          cd pg-patches
+          git clone https://github.com/borislavr/postgres-patches.git
+          git checkout main
+          cp -r ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
+          cat ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
+          cd ${GITHUB_WORKSPACE}
           echo "::group::Build deb packages"
           cd ${GITHUB_WORKSPACE}
           cp ${GITHUB_WORKSPACE}/deb/postgresql/debian ${GITHUB_WORKSPACE} -rf
