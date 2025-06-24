@@ -58,6 +58,7 @@ jobs:
           mkdir -p ${GITHUB_WORKSPACE}/pg-patches
           cd pg-patches
           git clone https://github.com/borislavr/postgres-patches.git
+          cd postgres-patches
           git checkout main
           cp -r ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
           cat ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
