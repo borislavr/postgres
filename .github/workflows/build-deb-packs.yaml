@@ -51,8 +51,10 @@ jobs:
           git checkout main
           cp -r ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
           ls -la ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
+          echo "[DEBUG]: Original ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
+          cat ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
           cat ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
-          echo "[DEBUG]: ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
+          echo "[DEBUG]: Modified ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
           cat ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
           cd ${GITHUB_WORKSPACE}
           echo "::group::Build deb packages"
