@@ -35,17 +35,6 @@ jobs:
           python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Create a New Tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-action@main
-        with:
-          ref: ${{ github.ref_name }}
-          tag-name: ${{ inputs.tag }}
-          force-create: ${{ inputs.forceCreate }}
-          switch-to-tag: true
-          create-release: true
-          skip-checkout: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build Debian PostgreSQL’s packages"
         run: |
           echo "::group::Get Debian scripts"
@@ -61,7 +50,10 @@ jobs:
           cd postgres-patches
           git checkout main
           cp -r ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
+          ls -la ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
           cat ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
+          echo "[DEBUG]: ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
+          cat ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
           cd ${GITHUB_WORKSPACE}
           echo "::group::Build deb packages"
           cd ${GITHUB_WORKSPACE}
@@ -69,6 +61,17 @@ jobs:
           dpkg-buildpackage -rfakeroot -b -uc -us
           echo "::endgroup::"
           echo "distribution_root=$(realpath ${GITHUB_WORKSPACE}/../)" >> $GITHUB_ENV
+      - name: Create a New Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@main
+        with:
+          ref: ${{ github.ref_name }}
+          tag-name: ${{ inputs.tag }}
+          force-create: ${{ inputs.forceCreate }}
+          switch-to-tag: true
+          create-release: true
+          skip-checkout: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Upload assets"
         uses: netcracker/qubership-workflow-hub/actions/assets-action@main
         with:
