@@ -54,6 +54,14 @@ jobs:
           cd postgresql
           git checkout ${{ inputs.pg_version }}
           echo "::endgroup::"
+          cd ${GITHUB_WORKSPACE}
+          mkdir -p ${GITHUB_WORKSPACE}/pg-patches
+          cd pg-patches
+          git clone https://github.com/borislavr/postgres-patches.git
+          git checkout main
+          cp -r ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
+          cat ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
+          cd ${GITHUB_WORKSPACE}
           echo "::group::Build deb packages"
           cd ${GITHUB_WORKSPACE}
           cp ${GITHUB_WORKSPACE}/deb/postgresql/debian ${GITHUB_WORKSPACE} -rf
@@ -67,15 +75,4 @@ jobs:
           item-path: ${{ env.distribution_root }}/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Upload deb packages
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     include-hidden-files: true
-      #     path: ${{ env.distribution_root }}/**/*.deb
-      #     name: pgsql-${{ inputs.pg_version }}-deb
-      - name: Summary
-        run: |
-          echo "## Built packages:" >> $GITHUB_STEP_SUMMARY
-          cd ${{ env.distribution_root }}
-          find  -name "*.deb" -printf "%f\n" | grep ".deb" >> $GITHUB_STEP_SUMMARY
 
