@@ -1,9 +1,9 @@
 name: Build Deb packages
-run-name: "PostgreSQL: ${{ inputs.pg_version }}. Tag: ${{ inputs.tag }}. Branch: ${{ github.ref_name }}"
+run-name: "PostgreSQL: ${{ inputs.pg-version }}. Tag: ${{ inputs.tag }}. Branch: ${{ github.ref_name }}"
 on:
   workflow_dispatch:
     inputs:
-      pg_version:
+      pg-version:
         description: Target PostgreSQL version
         type: choice
         required: true
@@ -15,11 +15,18 @@ on:
         description: Tag name to be created for deb packages upload to
         type: string
         required: true
-      forceCreate:
-        description: Recreate tag if it exists
-        type: boolean
-        default: false
-        required: false
+      patch-source-repo:
+        description: Repository with patches to be applied to PostgreSQL source code
+        type: string
+        default: 'https://github.com/Netcracker/qubership-hub-test.git'
+      patch-source-branch:
+        description: Branch with patches to be applied to PostgreSQL source code
+        type: string
+        default: 'main'
+      patch-source-dir:
+        description: Directory with patches to be applied to PostgreSQL source code
+        type: string
+        default: 'postgres-patches/patches-17'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,28 +42,33 @@ jobs:
           python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: "Build Debian PostgreSQL’s packages"
+        with:
+          ref: 'REL_${{ inputs.pg-version }}_STABLE'
+      - name: "Build Debian PostgreSQL packages"
         run: |
           echo "::group::Get Debian scripts"
+          echo "[DEBUG]: Getting Debian scripts for PostgreSQL ${{ inputs.pg-version }}"
           mkdir -p ${GITHUB_WORKSPACE}/deb && cd ${GITHUB_WORKSPACE}/deb
           git clone https://salsa.debian.org/postgresql/postgresql.git
           cd postgresql
-          git checkout ${{ inputs.pg_version }}
+          git checkout ${{ inputs.pg-version }}
           echo "::endgroup::"
+          echo "::group::Get PostgreSQL patches"
           cd ${GITHUB_WORKSPACE}
           mkdir -p ${GITHUB_WORKSPACE}/pg-patches
+          git clone ${{ inputs.patch-source-repo }} pg-patches
           cd pg-patches
-          git clone https://github.com/borislavr/postgres-patches.git
-          cd postgres-patches
-          git checkout main
-          cp --update=none -r ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
+          git checkout ${{ inputs.patch-source-branch }}
+          cp --update=none -r ${GITHUB_WORKSPACE}/pg-patches/${{ inputs.patch-source-dir }}/* ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
           ls -la ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches
           echo "[DEBUG]: Original ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
           cat ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
-          cat ${GITHUB_WORKSPACE}/pg-patches/postgres-patches/patches-${{ inputs.pg_version }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
+          cat ${GITHUB_WORKSPACE}/pg-patches/${{ inputs.patch-source-dir }}/series >> ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
           echo "[DEBUG]: Modified ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
           cat ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
-          cd ${GITHUB_WORKSPACE}
+          echo "::endgroup::"
+      - name: "Build PostgreSQL deb packages"
+        run: |
           echo "::group::Build deb packages"
           cd ${GITHUB_WORKSPACE}
           cp ${GITHUB_WORKSPACE}/deb/postgresql/debian ${GITHUB_WORKSPACE} -rf
