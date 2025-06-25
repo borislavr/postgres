@@ -31,20 +31,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Install prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --fix-missing flex bison libicu-dev libperl-dev tcl krb5-multidev \
-          debhelper-compat dh-exec docbook-xsl gdb gettext dpkg-dev \
-          libio-pty-perl libipc-run-perl libkrb5-dev libldap2-dev libpam-dev \
-          libreadline-dev libselinux1-dev libssl-dev libsystemd-dev build-essential \
-          libxml2-dev libxml2-utils libxslt1-dev pkg-config clang llvm-dev \
-          python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: 'REL_${{ inputs.pg-version }}_STABLE'
-      - name: "Build Debian PostgreSQL packages"
+      - name: "Get Debian scripts and patches"
         run: |
           echo "::group::Get Debian scripts"
           echo "[DEBUG]: Getting Debian scripts for PostgreSQL ${{ inputs.pg-version }}"
@@ -67,6 +58,15 @@ jobs:
           echo "[DEBUG]: Modified ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series"
           cat ${GITHUB_WORKSPACE}/deb/postgresql/debian/patches/series
           echo "::endgroup::"
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing flex bison libicu-dev libperl-dev tcl krb5-multidev \
+          debhelper-compat dh-exec docbook-xsl gdb gettext dpkg-dev \
+          libio-pty-perl libipc-run-perl libkrb5-dev libldap2-dev libpam-dev \
+          libreadline-dev libselinux1-dev libssl-dev libsystemd-dev build-essential \
+          libxml2-dev libxml2-utils libxslt1-dev pkg-config clang llvm-dev \
+          python3-dev systemtap-sdt-dev tcl-dev uuid-dev xsltproc libz-dev
       - name: "Build PostgreSQL deb packages"
         run: |
           echo "::group::Build deb packages"
